@@ -1,0 +1,331 @@
+{
+  "provenance": {
+    "kind": "live-local-server-capture",
+    "capturedAt": "2026-10-19T00:39:08.250Z",
+    "node": "v24.13.0",
+    "gitHeadAtTest": "6da8a2306fb5310ec3f193e6fa7115ff6590017a",
+    "serverBinarySha256": "b02e99767cbdff938ec0481ae710ae4fa7ff23fd42a199d1ef2f494fe05a2c81",
+    "mockAuthentication": true
+  },
+  "samples": {
+    "identity": {
+      "user_uuid": "user-mock-123",
+      "id": 1,
+      "email": "mock@example.com",
+      "org": "org-mock-1",
+      "roles": [
+        "admin"
+      ]
+    },
+    "channels": {
+      "org_uuid": "org-mock-1",
+      "team_uuid": "org-mock-1-home",
+      "team_name": "SDK-Test",
+      "channels": [
+        {
+          "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+          "org_uuid": "org-mock-1",
+          "team_uuid": "org-mock-1-home",
+          "slug": "sdk-phase-0-public",
+          "display_name": "SDK Phase 0 Public",
+          "is_private": false
+        },
+        {
+          "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-second",
+          "org_uuid": "org-mock-1",
+          "team_uuid": "org-mock-1-home",
+          "slug": "sdk-phase-0-second",
+          "display_name": "SDK Phase 0 Second",
+          "is_private": false
+        }
+      ]
+    },
+    "typing": {
+      "type": "typing",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "user_uuid": "user-mock-456",
+      "ts": 1792370346,
+      "ttl_ms": 6000
+    },
+    "sendRequest": {
+      "id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "content": "!status",
+      "thread_root_id": null,
+      "priority": "standard"
+    },
+    "sendReceipt": {
+      "status": "ACK",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "created_at": 1792370346,
+      "attachment_count": 0,
+      "attachment_manifest_blake3": "d53d18c23212ea7b6300594bb89bce60218f6eff2b9d628b8cc42d3e79bbd5ab"
+    },
+    "message": {
+      "id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "sender_id": "user-mock-456",
+      "content": "!status",
+      "thread_root_id": null,
+      "created_at": 1792370346,
+      "is_long": false,
+      "priority": "standard"
+    },
+    "replyRequest": {
+      "id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "content": "All systems operational.",
+      "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root"
+    },
+    "reply": {
+      "id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "sender_id": "user-mock-123",
+      "content": "All systems operational.",
+      "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "created_at": 1792370346,
+      "is_long": false,
+      "priority": "standard"
+    },
+    "legacyAck": "ACK",
+    "mutationRequest": {
+      "operation_id": "reaction-9fd2920b-d7af-48c4-8fcc-a1f617d90207",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "mutation": {
+        "kind": "set_reaction",
+        "emoji": "✅",
+        "present": true
+      }
+    },
+    "mutationReceipt": {
+      "schema": 1,
+      "operation_id": "reaction-9fd2920b-d7af-48c4-8fcc-a1f617d90207",
+      "actor_id": "user-mock-456",
+      "request_digest": "712ed160489758090bea0d88a9a508be134a59751e9d2277732845ff38999fa3",
+      "state": {
+        "schema": 1,
+        "org_uuid": "org-mock-1",
+        "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+        "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+        "sender_id": "user-mock-123",
+        "created_at": 1792370346,
+        "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+        "priority": "standard",
+        "original_body": "All systems operational.",
+        "body": "All systems operational.",
+        "revision": 1,
+        "updated_at": 1792370346,
+        "deleted": false,
+        "reaction_revision": 1,
+        "reactions": {
+          "✅": [
+            "user-mock-456"
+          ]
+        },
+        "attachments": []
+      }
+    },
+    "reaction": {
+      "type": "reaction",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "reactions": {
+        "✅": [
+          "user-mock-456"
+        ]
+      },
+      "state": {
+        "schema": 1,
+        "org_uuid": "org-mock-1",
+        "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+        "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+        "sender_id": "user-mock-123",
+        "created_at": 1792370346,
+        "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+        "priority": "standard",
+        "original_body": "All systems operational.",
+        "body": "All systems operational.",
+        "revision": 1,
+        "updated_at": 1792370346,
+        "deleted": false,
+        "reaction_revision": 1,
+        "reactions": {
+          "✅": [
+            "user-mock-456"
+          ]
+        },
+        "attachments": []
+      }
+    },
+    "history": {
+      "schema": 2,
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "thread_root_id": null,
+      "messages": [
+        {
+          "schema": 1,
+          "org_uuid": "org-mock-1",
+          "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+          "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+          "sender_id": "user-mock-456",
+          "created_at": 1792370346,
+          "thread_root_id": null,
+          "priority": "standard",
+          "original_body": "!status",
+          "body": "!status",
+          "revision": 1,
+          "updated_at": 1792370346,
+          "deleted": false,
+          "reaction_revision": 0,
+          "reactions": {},
+          "attachments": []
+        }
+      ],
+      "next_cursor": null
+    },
+    "threadHistory": {
+      "schema": 2,
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "messages": [
+        {
+          "schema": 1,
+          "org_uuid": "org-mock-1",
+          "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+          "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+          "sender_id": "user-mock-123",
+          "created_at": 1792370346,
+          "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+          "priority": "standard",
+          "original_body": "All systems operational.",
+          "body": "All systems operational.",
+          "revision": 1,
+          "updated_at": 1792370346,
+          "deleted": false,
+          "reaction_revision": 1,
+          "reactions": {
+            "✅": [
+              "user-mock-456"
+            ]
+          },
+          "attachments": []
+        }
+      ],
+      "next_cursor": null
+    },
+    "edit": {
+      "type": "edit",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "content": "Updated status: operational.",
+      "edited_at": 1792370346,
+      "state": {
+        "schema": 1,
+        "org_uuid": "org-mock-1",
+        "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+        "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+        "sender_id": "user-mock-123",
+        "created_at": 1792370346,
+        "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+        "priority": "standard",
+        "original_body": "All systems operational.",
+        "body": "Updated status: operational.",
+        "revision": 2,
+        "updated_at": 1792370346,
+        "deleted": false,
+        "reaction_revision": 1,
+        "reactions": {
+          "✅": [
+            "user-mock-456"
+          ]
+        },
+        "attachments": []
+      }
+    },
+    "receipt": {
+      "type": "receipt",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "user_uuid": "user-mock-456",
+      "ts": 1792370346
+    },
+    "conversation": {
+      "id": "9c5e3ec2-d48c-40ba-885c-b8b9172a7404",
+      "channel_key": "org-mock-1:conv:9c5e3ec2-d48c-40ba-885c-b8b9172a7404",
+      "name": null,
+      "kind": "dm",
+      "member_count": 2,
+      "my_role": "admin",
+      "members": [
+        {
+          "user_uuid": "user-mock-123",
+          "role": "admin"
+        },
+        {
+          "user_uuid": "user-mock-456",
+          "role": "member"
+        }
+      ],
+      "last_message_at": null
+    },
+    "delete": {
+      "type": "delete",
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "deleted_at": 1792370348,
+      "state": {
+        "schema": 1,
+        "org_uuid": "org-mock-1",
+        "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+        "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+        "sender_id": "user-mock-123",
+        "created_at": 1792370346,
+        "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+        "priority": "standard",
+        "original_body": "All systems operational.",
+        "body": "Updated status: operational.",
+        "revision": 3,
+        "updated_at": 1792370348,
+        "deleted": true,
+        "reaction_revision": 1,
+        "reactions": {
+          "✅": [
+            "user-mock-456"
+          ]
+        },
+        "attachments": []
+      }
+    },
+    "state": {
+      "schema": 1,
+      "org_uuid": "org-mock-1",
+      "channel_id": "org-mock-1:org-mock-1-home:sdk-phase-0-public",
+      "message_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-reply",
+      "sender_id": "user-mock-123",
+      "created_at": 1792370346,
+      "thread_root_id": "sdk-9fd2920b-d7af-48c4-8fcc-a1f617d90207-root",
+      "priority": "standard",
+      "original_body": "All systems operational.",
+      "body": "Updated status: operational.",
+      "revision": 3,
+      "updated_at": 1792370348,
+      "deleted": true,
+      "reaction_revision": 1,
+      "reactions": {
+        "✅": [
+          "user-mock-456"
+        ]
+      },
+      "attachments": []
+    }
+  }
+}

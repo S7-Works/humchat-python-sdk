@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "humchat-sdk"
+dynamic = ["version"]
+description = "HumChat backend SDK: typed messaging and real-time preview with delegated member authentication"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "S7 Works" }]
+classifiers = [
+  # Private preview: never upload to a public index.
+  "Private :: Do Not Upload",
+  "Development Status :: 3 - Alpha",
+  "Framework :: AsyncIO",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+]
+dependencies = [
+  "httpx>=0.27,<1",
+  "websockets>=13.0,<18",
+]
+
+[project.optional-dependencies]
+dev = [
+  "aiohttp>=3.9",
+  "mypy>=1.10",
+  "pytest>=8.0",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.6",
+]
+
+[project.urls]
+Repository = "https://github.com/S7-Works/humchat-python-sdk"
+Issues = "https://github.com/S7-Works/humchat-python-sdk/issues"
+
+[tool.hatch.version]
+path = "src/humchat/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/humchat"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/humchat", "README.md", "CHANGELOG.md", "LICENSE", "docs", "examples"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-ra --import-mode=importlib"
+markers = [
+  "live: opt-in acceptance against a real HumChat deployment (HUMCHAT_SDK_ACCEPTANCE=1)",
+]
+
+[tool.ruff]
+line-length = 160
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "A", "RUF"]
+# A001/A004: PermissionError and TimeoutError deliberately mirror the Node SDK's public names.
+# UP007: typing.Union keeps runtime type aliases valid on Python 3.10.
+ignore = ["RUF022", "B008", "A001", "A004", "UP007"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011", "A002", "RUF001", "RUF003"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/humchat"]
+strict = true
+warn_unused_ignores = false
+warn_return_any = false
+disallow_any_generics = false
