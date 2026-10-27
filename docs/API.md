@@ -188,3 +188,62 @@ All errors extend `HumChatError`. They expose `code`, `kind`, `retryable` and op
 ## Webhook management and verification
 
 `client.webhooks` provides `create(id=, url=, channel_ids=)`, `list()`, `get(id)`, `pause(id)`, `resume(id)`, `delete(id)`, `rotate_secret(id)`, `deliveries(id, status=None, limit=None, before=None)` and `replay(id, delivery_id)`. `verify_webhook(raw_body, signature_header, secrets, ...)` returns a verified `WebhookEnvelope` with a normalized `DurableEvent`, or raises `WebhookVerificationError`. Management mutations are single-attempt, including authentication failures. See the [webhook guide](WEBHOOKS.md).
+
+| Type | Fields |
+| --- | --- |
+| `WebhookSubscription` | `id`, `org_id`, `url`, `status` (`WebhookStatus`: `active`/`paused`/`deleted`), `secret_version`, `previous_secret_expires_at`, `created_by`, `created_at`, `updated_at`, `channels` (`list[WebhookChannel]`) |
+| `WebhookChannel` | `channel_id`, `epoch`, `sequence`, `status` (`active`/`gap`/`dead`), `last_error` |
+| `WebhookSecretResult` | `subscription`, `signing_secret` (redacted in `repr`) |
+| `WebhookDelivery` | `id`, `subscription_id`, `channel_id`, `epoch`, `sequence`, `event_id`, `status` (`WebhookDeliveryStatus`: `pending`/`retry`/`delivered`/`dead`), `attempts`, `next_attempt_at`, `created_at`, `updated_at`, `last_status`, `last_error` |
+| `WebhookDeliveryPage` | `deliveries`, `next_before` |
+| `WebhookDeletion` | `id`, `deleted=True` |
+| `WebhookEnvelope` | `schema`, `subscription_id`, `delivery_id`, `org_id`, `channel_id`, `event_id`, `attempt`, `sent_at`, `event` |
+
+```python
+created = await client.webhooks.create(id=str(uuid.uuid4()), url="https://receiver.example/hook", channel_ids=[channel_id])
+store_secret(created.signing_secret)
+await client.webhooks.resume(created.subscription.id)
+for subscription in await client.webhooks.list():
+    print(subscription.id, subscription.status, [c.channel_id for c in subscription.channels])
+page = await client.webhooks.deliveries(created.subscription.id, status="dead", limit=10)
+for delivery in page.deliveries:
+    await client.webhooks.replay(created.subscription.id, delivery.id)
+rotated = await client.webhooks.rotate_secret(created.subscription.id)
+await client.webhooks.delete(created.subscription.id)
+```
+
+## Index of remaining public names
+
+Every name exported by `humchat` is documented above or here.
+
+| Name | Description and example |
+| --- | --- |
+| `__version__` | Package version string: `print(humchat.__version__)`. |
+| `TokenProvider` | Type of `token_provider`: `Callable[[TokenProviderContext], TokenResult | Mapping | Awaitable[...]]`. |
+| `TokenProviderContext` | `reason`, `signal`, `previous` passed to the provider: `if ctx.reason == "unauthorized": refresh()`. |
+| `TokenPrevious` | `ctx.previous.expires_at` of the preceding session (`None` on first use). |
+| `TokenResult` | `return TokenResult(token=t, expires_at=int(time.time()) + 900)`. |
+| `AuthenticationCapabilities` | `caps.authentication.socket_session_end_codes`, `.sdk_key_user_tokens`, `.user_sessions`, `.service_identities`, `.api_key_exchange`, `.app_binding_required`, `.mock_authentication`. |
+| `MessagingCapabilities` | `caps.messaging.durable_replay`, `.event_protocol_versions`, `.send_receipt_versions`, `.message_state_versions`, `.history_versions`, `.websocket_scope`, `.multiplexed_events`, `.outgoing_webhooks`. |
+| `MultiplexedEvents` | `caps.messaging.multiplexed_events.max_channels` (or `None`). |
+| `OutgoingWebhooks` | `caps.messaging.outgoing_webhooks.schema_versions` (or `None`). |
+| `MessagePriority` | `Literal["standard", "important", "urgent"]`. |
+| `MessageReference` | `await client.messages.reply(MessageReference(id=mid, channel_id=channel_id, thread_root_id=None), content="Ack")`. |
+| `LiveAttachment` | Live `Message.attachments` items: `MessageAttachment` fields plus delivery-time `url`, `thumbnail_url`. |
+| `ConnectionStatus` | `Literal["idle", "connecting", "syncing", "live", "backoff", "blocked", "closed"]`, as in `sub.status`. |
+| `EventSource` | `Literal["live", "recovery"]`, as in `MessageEvent.source`. |
+| `SubscribeStart` | `"now"`, `"earliest"` or `EventCursor(cursor)` for `realtime.subscribe(start=...)`. |
+| `ChannelSubscription` | Handle returned by `realtime.subscribe()`; methods `on`, `off`, `consume`, `typing`, `mark_read`, `resync`, `close`; properties `ready`, `status`, `channel_id`. |
+| `EventListener` | `Callable[[payload], Any]`; sync or async: `sub.on("message", handle_message)`. |
+| `EVENT_NAMES` | Frozen set of valid `on()` names: `assert "message_updated" in EVENT_NAMES`. |
+| `DurableConsumer` | Protocol of `consume()` handlers: `async def handler(event: DurableEvent, context: ConsumerContext) -> None`. |
+| `ConsumerContext` | `context.signal` (aborted on disconnect/close/deadline), `context.source` (`live`/`recovery`). |
+| `InboxWatch` | Returned by `inbox.watch()`; `ready`, `done`, `status`, `error`, `last_channel_error`, `get_stats()`, `refresh()`, `close()`: `await watch.refresh(); print(watch.last_channel_error)`. |
+| `InboxStatus` | `Literal["starting", "watching", "blocked", "closed"]`. |
+| `InboxStats`, `InboxChannelStats` | `stats = watch.get_stats(); stats.conversations; [(c.channel_id, c.status) for c in stats.channels]`. |
+| `OutboxMessage` | `TypedDict` for `outbox.send(message=...)`: `{"channel_id": ..., "content": ..., "id"?, "thread_root_id"?, "priority"?}`. |
+| `OutboxIntent` | Stored intent: `entry.intent.id`, `.channel_id`, `.content`, `.thread_root_id`, `.priority`. |
+| `OutboxEntry` | `key`, `intent`, `idempotency_key`, `status` (`pending`/`sent`), `receipt`: `[e.key for e in await store.list_pending(scope)]`. |
+| `WebhookStatus`, `WebhookDeliveryStatus` | Literal types listed in the webhook table above. |
+
+`ChannelSubscription.dispatch`, `notify`, `resolve_ready` and `reject_ready`, and every name in modules starting with `_`, are internal to the SDK's workers and not part of the supported API.
