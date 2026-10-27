@@ -280,6 +280,9 @@ async def test_membership_removal_closes_only_owned_conversation_handles_and_rej
     await peer.publish(event)
     await until(lambda: loads(store, peer.scope("a"), event["cursor"]), "first checkpoint")
     del peer.rows["a"]
+    # A periodic discovery may already be in flight with the old roster; coalesced callers
+    # share it, so a second refresh guarantees one discovery that started after the change.
+    await inbox.refresh()
     await inbox.refresh()
     assert inbox.get_stats().conversations == 1
     assert client.realtime.get_stats().channels == 1
@@ -288,6 +291,7 @@ async def test_membership_removal_closes_only_owned_conversation_handles_and_rej
     await asyncio.sleep(0.03)
     assert seen == ["a-first"]
     peer.add("a")
+    await inbox.refresh()
     await inbox.refresh()
     await until(lambda: loads(store, peer.scope("a"), missed["cursor"]), "rejoin checkpoint")
     assert seen == ["a-first", "a-away"]

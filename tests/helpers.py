@@ -93,7 +93,7 @@ async def rejects(awaitable: Awaitable[Any], expected: Any = HumChatError) -> Ba
     """``assert.rejects``: ``expected`` is an exception class, a predicate, or an error code string."""
     try:
         await awaitable
-    except BaseException as error:  # noqa: BLE001
+    except BaseException as error:
         if isinstance(error, asyncio.CancelledError):
             raise
         if isinstance(expected, str):
@@ -140,7 +140,7 @@ class Observed:
         try:
             self.value = await awaitable
             self.state = "fulfilled"
-        except BaseException as error:  # noqa: BLE001
+        except BaseException as error:
             self.error = error
             self.state = "rejected"
 
@@ -220,7 +220,7 @@ class PeerSocket:
         await self.ws.send_str(frame if isinstance(frame, str) else json.dumps(frame))
 
     async def terminate(self) -> None:
-        transport = self.ws._req.transport if self.ws._req is not None else None  # noqa: SLF001
+        transport = self.ws._req.transport if self.ws._req is not None else None
         if transport is not None:
             transport.abort()
 
@@ -275,7 +275,7 @@ class LoopbackPeer:
         await self._runner.setup()
         site = web.TCPSite(self._runner, "127.0.0.1", 0)
         await site.start()
-        server = site._server  # noqa: SLF001
+        server = site._server
         assert server is not None
         port = server.sockets[0].getsockname()[1]
         self.base_url = f"http://127.0.0.1:{port}"
@@ -316,7 +316,7 @@ class LoopbackPeer:
                 return result
             status, value = result
             return web.json_response(value, status=status)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             self.fixture_errors.append(error)
             return web.json_response({}, status=500)
 
@@ -325,7 +325,7 @@ class LoopbackPeer:
         self.upgrades.append(upgrade)
         try:
             rejected = await self.upgrade_handler(upgrade) if self.upgrade_handler is not None else None
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             self.fixture_errors.append(error)
             return web.Response(status=500)
         if rejected:
@@ -356,7 +356,7 @@ class LoopbackPeer:
                         await ws.pong(message.data)
                 elif message.type in (WSMsgType.CLOSE, WSMsgType.ERROR):
                     break
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             if not ws.closed:
                 self.fixture_errors.append(error)
         return ws

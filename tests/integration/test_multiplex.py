@@ -604,7 +604,8 @@ async def test_shared_page_pressure_retries_only_the_affected_logical_channel_an
         await until(lambda: len(seen["event"]) == 1, "logical retry after release")
         assert attempts == 1
         assert len(fixture.upgrades) == 1
-        assert client.realtime.get_stats().queued_events == 0
+        # The page budget is released after the observer returns; wait for that settlement.
+        await until(lambda: client.realtime.get_stats().queued_events == 0, "shared budget released")
     finally:
         gate.resolve()
         await store.close()
