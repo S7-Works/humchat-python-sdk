@@ -4,7 +4,7 @@
 
 Preview status: `auth={"sdk_key": ..., "act_as": ...}` logs in through HumChat, caches and renews tokens, shares acquisition across callers, verifies the member identity and backs off during outages. Caller-managed `token_provider` authentication is also supported. This version is prepared for review; it is not a production acceptance or package-index publication milestone. See the [login guide](docs/SDK_KEY_LOGIN_GUIDE.md), [release gates](docs/RELEASING.md) and the [Node-to-Python mapping](docs/MIGRATION.md#from-the-node-sdk).
 
-The source is public at [S7-Works/humchat-python-sdk](https://github.com/S7-Works/humchat-python-sdk). The package is **not published to PyPI**: its classifiers include `Private :: Do Not Upload`, so index uploads are refused. Licensing is pending: [LICENSE](LICENSE) remains `UNLICENSED`, with no open-source license granted.
+The source lives at [S7-Works/humchat-python-sdk](https://github.com/S7-Works/humchat-python-sdk) (GitHub visibility: public, as reported by the GitHub API on 2026-10-27; visibility is an owner setting and may change). The package is **not published to PyPI**: its classifiers include `Private :: Do Not Upload`, so index uploads are refused. Licensing is pending: [LICENSE](LICENSE) remains `UNLICENSED`, with no open-source license granted.
 
 Requires Python 3.10 or later and a compatible HumChat server with `/api/sdk/capabilities`, send receipts v1, message state v1, and history v2. Runtime dependencies are [`httpx`](https://www.python-httpx.org/) and [`websockets`](https://websockets.readthedocs.io/). The package ships `py.typed` inline type information. This repository contains the SDK; it does not include the HumChat server, and the SDK has **no built-in server address**: `base_url`, `org_id` and credentials are always supplied by your application.
 
@@ -256,6 +256,128 @@ Errors extend `HumChatError`, with stable `code`, `kind`, `retryable`, optional 
 The suite ports every Node unit, controlled-peer integration, release-policy and installed-package test. It uses synthetic identities and local HTTP/WebSocket peers; it needs no production credentials. A live acceptance runner is opt-in and reads credentials only from environment variables; see [SDK-key message acceptance](docs/SDK_KEY_MESSAGE_ACCEPTANCE.md).
 
 Runnable examples live under `examples/`. Set `HUMCHAT_BASE_URL`, `HUMCHAT_ORG_ID`, and either `HUMCHAT_TOKEN` or `HUMCHAT_SDK_KEY` + `HUMCHAT_ACT_AS`, plus the variables documented in each example.
+
+## Complete public API with examples
+
+Every public name exported by `humchat` is listed below with a short example. All snippets run inside an `async` function with a configured `client = HumChat(...)`; `channel_id` is a canonical routing key. Full signatures and payload fields are in [docs/API.md](docs/API.md).
+
+### Client
+
+| API | Example |
+| --- | --- |
+| `HumChat(...)` | `client = HumChat(org_id=org, base_url=url, auth={"sdk_key": key, "act_as": email})` |
+| `HumChat.connect()` | `me = await client.connect(); print(me.actor_id)` |
+| `HumChat.get_capabilities()` | `caps = await client.get_capabilities(); caps.messaging.durable_replay` |
+| `HumChat.get_config()` | `client.get_config().retry["max_retries"]` |
+| `HumChat.close()` / `async with` | `async with HumChat(...) as client: ...` |
+| `SdkKeyAuth` | `HumChat(org_id=org, base_url=url, auth=SdkKeyAuth(sdk_key=key, act_as=email))` |
+| `TokenResult`, `TokenProviderContext`, `TokenPrevious`, `TokenProvider` | `async def provider(ctx: TokenProviderContext) -> TokenResult: return TokenResult(token=t, expires_at=exp)` |
+| `RetryOptions`, `RealtimeOptions`, `RecoveryOptions` | `HumChat(..., retry={"max_retries": 2}, realtime={"max_channels": 10}, recovery={"mode": "best_effort"})` |
+| `SafeConfig` | `cfg: SafeConfig = client.get_config()` |
+| `AbortController`, `AbortSignal` | `ctl = AbortController(); task = client.channels.list(signal=ctl.signal); ctl.abort()` · `signal=AbortSignal.timeout(5_000)` · `AbortSignal.any([a, b])` |
+| `__version__` | `print(humchat.__version__)` |
+
+### Channels, members and conversations
+
+| API | Example |
+| --- | --- |
+| `channels.list()` | `listing = await client.channels.list(team_id="team-1"); [c.id for c in listing.channels]` |
+| `members.list()` | `active = [m for m in await client.members.list() if m.status == "active"]` |
+| `conversations.list()` | `for conv in await client.conversations.list(): print(conv.channel_id, conv.name)` |
+| `conversations.create()` | `group = await client.conversations.create(member_ids=[a, b], name="Release")` |
+| `conversations.open_direct()` | `dm = await client.conversations.open_direct(member_id=peer)` |
+
+### Messages
+
+| API | Example |
+| --- | --- |
+| `messages.send()` | `receipt = await client.messages.send(channel_id=channel_id, content="Build completed.", priority="important")` |
+| `messages.send_direct()` | `result = await client.messages.send_direct(recipient_id=peer, content="Hi")` |
+| `messages.reply()` | `await client.messages.reply(state_or_message, content="Thanks")` |
+| `messages.get_state()` | `state = await client.messages.get_state(channel_id=channel_id, message_id=receipt.id)` |
+| `messages.history()` | `page = await client.messages.history(channel_id=channel_id, limit=50)` |
+| `messages.iterate_history()` | `async for page in client.messages.iterate_history(channel_id=channel_id): ...` |
+| `messages.edit()` | `await client.messages.edit(channel_id=channel_id, message_id=mid, content="Fixed", expected_revision=state.revision)` |
+| `messages.delete()` | `await client.messages.delete(channel_id=channel_id, message_id=mid, expected_revision=2)` |
+| `messages.set_reaction()` | `await client.messages.set_reaction(channel_id=channel_id, message_id=mid, emoji="✅", present=True)` |
+
+### Durable events, outbox and persistence
+
+| API | Example |
+| --- | --- |
+| `events.sync()` | `page = await client.events.sync(channel_id=channel_id, after=cursor, limit=100)` |
+| `outbox.send()` | `await client.outbox.send(consumer_id="bot-v1", key=event.event_id, store=outbox, message={"channel_id": channel_id, "content": "Done"})` |
+| `outbox.flush()` | `await client.outbox.flush(consumer_id="bot-v1", channel_id=channel_id, store=outbox)` |
+| `MemoryCheckpointStore`, `MemoryOutboxStore` | `checkpoints = MemoryCheckpointStore(); outbox = MemoryOutboxStore()` |
+| `FileCheckpointStore.open()`, `FileOutboxStore.open()` | `checkpoints = await FileCheckpointStore.open("./private-state/checkpoints.json", max_bytes=16 * 1024 * 1024)` |
+| store methods `load`, `compare_and_set`, `prepare`, `mark_sent`, `list_pending`, `close` | `await checkpoints.compare_and_set(scope, None, cursor)` · `await outbox.list_pending(scope)` |
+| `PersistenceScope` | `PersistenceScope(server_origin=url, org_id=org, actor_id=me.actor_id, consumer_id="bot-v1", channel_id=channel_id)` |
+| `CheckpointStore`, `OutboxStore` (protocols) | `class DbCheckpoints(CheckpointStore): async def load(self, scope): ...` |
+| `OutboxEntry`, `OutboxIntent`, `OutboxMessage` | `entry = await outbox.prepare(scope, "job-1", {"channel_id": channel_id, "content": "Hi"}); entry.intent.id` |
+
+### Realtime
+
+| API | Example |
+| --- | --- |
+| `realtime.subscribe()` | `sub = client.realtime.subscribe(channel_id, start="earliest")` |
+| `EventCursor` | `sub = client.realtime.subscribe(channel_id, start=EventCursor(saved_cursor))` |
+| `realtime.subscribe_many()` → `SubscriptionResult` | `for r in client.realtime.subscribe_many([a, b]): r.error or r.subscription` |
+| `realtime.get_stats()` → `RealtimeStats` | `client.realtime.get_stats().active_sockets` |
+| `ChannelSubscription.on()` / `off()` | `sub.on("message", lambda e: print(e.message.content))` |
+| `ChannelSubscription.consume()` | `sub.consume(handler, consumer_id="bot-v1", checkpoint_store=checkpoints)` |
+| `ChannelSubscription.ready`, `status` | `await sub.ready; print(sub.status)` |
+| `ChannelSubscription.typing()` | `await sub.typing()` |
+| `ChannelSubscription.mark_read()` | `await sub.mark_read(through=1_792_370_346)` |
+| `ChannelSubscription.resync()` | `await sub.resync()` |
+| `ChannelSubscription.close()` | `await sub.close()` |
+| `EVENT_NAMES`, `EventListener` | `assert "recovery_complete" in EVENT_NAMES` |
+| `inbox.watch()` → `InboxWatch` | `watch = client.inbox.watch(handler, consumer_id="inbox-v1", checkpoint_store=checkpoints)` |
+| `InboxWatch.ready`, `done`, `refresh()`, `close()` | `await watch.ready; await watch.refresh(); await watch.close()` |
+| `InboxWatch.status`, `error`, `last_channel_error`, `get_stats()` → `InboxStats`, `InboxChannelStats`, `InboxStatus` | `print(watch.status, watch.get_stats().conversations)` |
+
+Event payload types (all dataclasses): `MessageEvent`, `StateEvent`, `DurableEvent`, `CheckpointEvent`, `ConnectionEvent`, `ResyncEvent`, `RecoveryCoverage`, `SessionRevokedEvent`, `AuthRequiredEvent`, `HandlerErrorEvent`, `UnknownEvent`, `TypingEvent`, `PresenceEvent`, `ReceiptEvent`, `CallInviteEvent`, plus `ConsumerContext` and `DurableConsumer` for consumers:
+
+```python
+async def handler(event: DurableEvent, context: ConsumerContext) -> None:
+    if event.kind == "message" and not context.signal.aborted:
+        print(event.sequence, event.state.body)
+
+sub.on("connection", lambda e: print(e.state, e.next_retry_at))         # ConnectionEvent
+sub.on("recovery_complete", lambda c: print(c.mode, c.complete))        # RecoveryCoverage
+sub.on("handler_error", lambda e: print(e.event, e.error.code))         # HandlerErrorEvent
+sub.on("typing", lambda t: print(t.actor_id, t.ttl_ms))                 # TypingEvent
+```
+
+Data types returned by the resources: `Identity`, `Channel`, `ChannelList`, `Conversation`, `ConversationMember`, `OrgMember`, `MessageState`, `MessageAttachment`, `Message`, `LiveAttachment`, `MessageReference`, `SendReceipt`, `DirectSendReceipt`, `HistoryPage`, `MutationReceipt`, `EventPage`, `SdkCapabilities`, `AuthenticationCapabilities`, `MessagingCapabilities`, `MultiplexedEvents`, `OutgoingWebhooks`, `SdkKeyUserTokens`; type aliases `MessagePriority`, `ConnectionStatus`, `EventSource`, `SubscribeStart`. Example: `await client.messages.reply(MessageReference(id=mid, channel_id=channel_id), content="Ack")`.
+
+### Webhooks
+
+| API | Example |
+| --- | --- |
+| `webhooks.create()` → `WebhookSecretResult` | `created = await client.webhooks.create(id=str(uuid.uuid4()), url="https://receiver.example/hook", channel_ids=[channel_id])` |
+| `webhooks.list()` / `get()` → `WebhookSubscription`, `WebhookChannel` | `subs = await client.webhooks.list(); sub = await client.webhooks.get(wid)` |
+| `webhooks.pause()` / `resume()` | `await client.webhooks.resume(wid)` |
+| `webhooks.rotate_secret()` | `new_secret = (await client.webhooks.rotate_secret(wid)).signing_secret` |
+| `webhooks.delete()` → `WebhookDeletion` | `await client.webhooks.delete(wid)` |
+| `webhooks.deliveries()` → `WebhookDeliveryPage`, `WebhookDelivery` | `page = await client.webhooks.deliveries(wid, status="dead", limit=20)` |
+| `webhooks.replay()` | `await client.webhooks.replay(wid, page.deliveries[0].id)` |
+| `verify_webhook()` → `WebhookEnvelope` | `env = verify_webhook(raw_body, headers["X-HumChat-Signature"], [secret], expected_org_id=org)` |
+| `WebhookStatus`, `WebhookDeliveryStatus` | `if sub.status == "paused": ...` |
+
+### Errors
+
+Every error is a `HumChatError` subclass with a stable `code`: `ConfigurationError`, `ValidationError`, `AuthenticationError`, `SessionRevokedError`, `PermissionError`, `NotFoundError`, `ConflictError`, `RateLimitError`, `NetworkError`, `TimeoutError`, `AbortError`, `ServerError`, `ProtocolError`, `UnsupportedFeatureError`, `BackpressureError`, `RecoveryGapError`, `PersistenceError`, `WebhookVerificationError`.
+
+```python
+try:
+    await client.messages.send(channel_id=channel_id, content="Hi")
+except humchat.RateLimitError as error:
+    await asyncio.sleep((error.retry_after_ms or 1000) / 1000)
+except humchat.RecoveryGapError as error:
+    print(error.earliest_cursor, error.earliest_sequence)
+except humchat.HumChatError as error:
+    print(error.code, error.status, error.retryable, error.message_id, error.idempotency_key)
+```
 
 ## Outgoing webhooks
 

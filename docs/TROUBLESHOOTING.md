@@ -78,4 +78,4 @@ For `RECOVERY_GAP`, record the affected scope and old/earliest cursor privately,
 
 ## Reporting a reproducible issue
 
-Provide the exact SDK version (`humchat.__version__`), Python/OS version, protocol capability flags, error category/status, bounded statistics, and whether the failure used durable or best-effort mode. Include a minimal reproduction with placeholder credentials and synthetic messages. Use the [issue tracker](https://github.com/S7-Works/humchat-python-sdk/issues) for nonsensitive bugs; see [Support](SUPPORT.md) and [SECURITY.md](../SECURITY.md) for security concerns.
+Provide the exact SDK version (`humchat.__version__`), Python/OS version, protocol capability flags, error category/status, bounded statistics, and whether the failure used durable or best-effort mode. Include a minimal reproduction with placeholder credentials and synthetic messages. Use the [issue tracker](https://github.com/S7-Works/humchat-python-sdk/issues) for nonsensitive bugs; see [Support](SUPPORT.md) for the private security reporting route.
