@@ -525,7 +525,10 @@ async def test_session_revocation_blocks_the_whole_client_without_refreshing_or_
 
 async def test_durable_heartbeat_reconnects_a_socket_that_stops_answering_ping_frames(after: Any) -> None:
     fixture = await peer(after, auto_pong=False)
-    client = fixture.client(realtime={"ping_interval_ms": 15, "pong_timeout_ms": 10, "reconnect_initial_delay_ms": 5, "reconnect_max_delay_ms": 10})
+    # Node uses 15/10 ms. Windows event loops before Python 3.13 have ~15.6 ms timer
+    # granularity, so such short liveness windows can expire before the first catch-up
+    # finishes and `ready` never resolves; 200/100 ms keeps the same behaviour observable.
+    client = fixture.client(realtime={"ping_interval_ms": 200, "pong_timeout_ms": 100, "reconnect_initial_delay_ms": 5, "reconnect_max_delay_ms": 10})
     subscription = client.realtime.subscribe(CHANNEL)
     capture(subscription)
     await subscription.ready

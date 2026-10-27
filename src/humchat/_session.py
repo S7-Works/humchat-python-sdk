@@ -248,15 +248,20 @@ class SessionManager:
 
     async def _refresh(self, reason: str, signal: AbortSignal) -> VerifiedSession:
         if self._pending is None:
-            work = ensure_future(self._acquire(reason))
+
+            async def run() -> VerifiedSession:
+                # Clear inside the task, not in a done-callback that runs a loop turn later:
+                # a caller arriving in between must start a new acquisition, as in JavaScript.
+                try:
+                    return await self._acquire(reason)
+                finally:
+                    if self._pending is work:
+                        self._pending = None
+
+            work = ensure_future(run())
             self._pending = work
-
-            def clear(_: Any) -> None:
-                if self._pending is work:
-                    self._pending = None
-
-            work.add_done_callback(clear)
-        return await race_signal(self._pending, signal)
+        pending = self._pending
+        return await race_signal(pending, signal)
 
     async def _acquire(self, reason: str) -> VerifiedSession:
         lifetime = budget(self._config.retry["total_timeout_ms"], [self._closed, self._revoked.signal])

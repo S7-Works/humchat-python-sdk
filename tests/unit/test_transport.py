@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 import pytest
 
-from helpers import Deferred, FakeClock, MockServer, Recorded, code, json_response, rejects, text_response
+from helpers import Deferred, FakeClock, MockServer, Recorded, code, json_response, rejects, text_response, until
 from humchat import AbortController, HumChat, HumChatError, TokenPrevious
 
 ORG = "org-mock-1"
@@ -118,7 +118,10 @@ async def test_concurrent_connect_uses_one_provider_call_and_one_verified_handsh
     client, server = make_client(token_provider=provider)
     first = asyncio.ensure_future(client.connect())
     second = asyncio.ensure_future(client.connect())
-    await asyncio.sleep(0.01)
+    # Windows loops before Python 3.13 can wake a 10 ms sleep early; wait for the first
+    # call explicitly, then give a competing acquisition time to (wrongly) start.
+    await until(lambda: calls >= 1, "provider called")
+    await asyncio.sleep(0.03)
     assert calls == 1
     gate.resolve()
     one, two = await asyncio.gather(first, second)

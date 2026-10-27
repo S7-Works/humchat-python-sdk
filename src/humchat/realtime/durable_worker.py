@@ -665,7 +665,9 @@ class DurableChannelWorker:
         self._refresh = _clock.call_later(wait, lambda: spawn(refresh()))
 
     def _wake(self, generation: int) -> None:
-        if self.status != "live" or self._pump is not None or not self._current(generation):
+        # A finished pump counts as absent even before its done-callback clears it (that
+        # callback runs a loop turn later, unlike a JavaScript microtask), so no hint is lost.
+        if self.status != "live" or (self._pump is not None and not self._pump.done()) or not self._current(generation):
             return
         reason = "resync" if self._resync_requested else "live"
         self._resync_requested = False
@@ -680,7 +682,7 @@ class DurableChannelWorker:
         pump.add_done_callback(failed)
 
     def _start_pump(self, generation: int, reason: str, through: str | None = None) -> asyncio.Future[None]:
-        if self._pump is not None:
+        if self._pump is not None and not self._pump.done():
             return self._pump
         work = spawn(self._run_pump(generation, reason, through))
         self._pump = work

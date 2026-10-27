@@ -660,7 +660,9 @@ class ChannelWorker:
         self._manager.counters.queued_bytes -= size
 
     def _drain(self, generation: int) -> asyncio.Future[None]:
-        if self._draining is not None:
+        # A finished task counts as absent: its clearing done-callback runs a loop turn later
+        # (JavaScript runs it as a microtask), and a frame enqueued in between must still drain.
+        if self._draining is not None and not self._draining.done():
             return self._draining
 
         async def work() -> None:
@@ -757,7 +759,7 @@ class ChannelWorker:
         if self.status == "blocked":
             raise ProtocolError("Channel is blocked; create a new subscription")
         self.notify("resync", ResyncEvent(channel_id=self.channel_id, reason="requested"))
-        if self.status != "live" or self._recovering is not None:
+        if self.status != "live" or (self._recovering is not None and not self._recovering.done()):
             self._resync_again = True
             return
         generation = self._generation
