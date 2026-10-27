@@ -31,6 +31,9 @@ dev = [
   "pytest>=8.0",
   "pytest-asyncio>=0.24",
   "ruff>=0.6",
+  # Package/release checks: build the sdist+wheel; tomllib backport on 3.10.
+  "build>=1.2",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.urls]
@@ -44,7 +47,9 @@ path = "src/humchat/_version.py"
 packages = ["src/humchat"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/humchat", "README.md", "CHANGELOG.md", "LICENSE", "docs", "examples"]
+# Anchored patterns: an unanchored "README.md" also matched contract/README.md.
+include = ["/src/humchat", "/README.md", "/CHANGELOG.md", "/LICENSE", "/docs", "/examples"]
+exclude = ["__pycache__", "*.pyc"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
