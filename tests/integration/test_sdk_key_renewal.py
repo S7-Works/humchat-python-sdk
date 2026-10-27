@@ -163,7 +163,8 @@ class Peer:
         }  # fmt: skip
         options: dict[str, Any] = {
             "org_id": ORG, "base_url": self.base_url, "auth": {"sdk_key": SDK_KEY, "act_as": EMAIL}, "timeout_ms": 1500,
-            "retry": {"max_retries": 0, "total_timeout_ms": 4000},
+            # Generous total budget: these tests assert sharing, not timing, and CI runners are slow.
+            "retry": {"max_retries": 0, "total_timeout_ms": 10000},
             "recovery": {"mode": "best_effort" if self.mode == "best_effort" else "durable"}, **extra, "realtime": realtime,
         }  # fmt: skip
         client = HumChat(**options)

@@ -30,6 +30,7 @@ dev = [
   "mypy>=1.10",
   "pytest>=8.0",
   "pytest-asyncio>=0.24",
+  "pytest-timeout>=2.3",
   "ruff>=0.6",
   # Package/release checks: build the sdist+wheel; tomllib backport on 3.10.
   "build>=1.2",
@@ -56,6 +57,9 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-ra --import-mode=importlib"
+# A hung test fails with a stack dump instead of stalling the whole CI job.
+timeout = 300
+timeout_method = "thread"
 markers = [
   "live: opt-in acceptance against a real HumChat deployment (HUMCHAT_SDK_ACCEPTANCE=1)",
 ]
