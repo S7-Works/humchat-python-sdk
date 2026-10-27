@@ -6,8 +6,8 @@ import math
 from typing import Any
 
 import pytest
-from helpers import MockServer, json_response, rejects, text_response
 
+from helpers import MockServer, json_response, rejects, text_response
 from humchat import ConfigurationError, HumChat, ProtocolError, UnsupportedFeatureError
 
 CAPABILITIES = {

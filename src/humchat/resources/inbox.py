@@ -120,7 +120,8 @@ class InboxWatch:
             assert self._error is not None
             return _rejected(loop, self._error)
         if self._refresh is not None:
-            return asyncio.shield(self._refresh)
+            # Coalesced callers receive the identical awaitable, like the Node promise.
+            return self._refresh
         if self._timer is not None:
             self._timer.cancel()
             self._timer = None
@@ -142,8 +143,11 @@ class InboxWatch:
                     self._timer = _clock.call_later(self._poll_interval_ms, self._periodic)
 
         task = spawn(run())
-        self._refresh = task
-        return asyncio.shield(task)
+        # Shield once so one awaiter's cancellation cannot cancel the shared discovery.
+        outer = asyncio.shield(task)
+        outer.add_done_callback(lambda done: done.cancelled() or done.exception())
+        self._refresh = outer
+        return outer
 
     def _periodic(self) -> None:
         self._timer = None

@@ -80,9 +80,17 @@ def _req(source: Mapping[str, Any], key: str) -> Any:
     return source[key]
 
 
+def _opt(source: Mapping[str, Any], key: str) -> Any:
+    """zod ``.optional()``: an absent key is allowed, an explicit null is not."""
+    if key not in source:
+        return None
+    _need(source[key] is not None)
+    return source[key]
+
+
 def _parse_identity(raw: Any) -> dict[str, Any]:
     v = _obj(raw)
-    scopes = v.get("scopes")
+    scopes = _opt(v, "scopes")
     expires_at = v.get("expires_at")
     app = v.get("app_uuid")
     return {
@@ -101,17 +109,17 @@ def _parse_capabilities(raw: Any) -> SdkCapabilities:
     _need(_req(v, "sdk_protocol_version") == 1 and not isinstance(v["sdk_protocol_version"], bool))
     auth = _obj(_req(v, "authentication"))
     msg = _obj(_req(v, "messaging"))
-    key_tokens = auth.get("sdk_key_user_tokens")
+    key_tokens = _opt(auth, "sdk_key_user_tokens")
     sdk_key_user_tokens = None
     if key_tokens is not None:
         k = _obj(key_tokens)
         sdk_key_user_tokens = SdkKeyUserTokens(
             endpoint=_str(_req(k, "endpoint")), key_header=_str(_req(k, "key_header")), configured=_bool(_req(k, "configured"))
         )
-    end_codes = auth.get("socket_session_end_codes")
-    multiplexed = msg.get("multiplexed_events")
-    webhooks = msg.get("outgoing_webhooks")
-    events = msg.get("event_protocol_versions")
+    end_codes = _opt(auth, "socket_session_end_codes")
+    multiplexed = _opt(msg, "multiplexed_events")
+    webhooks = _opt(msg, "outgoing_webhooks")
+    events = _opt(msg, "event_protocol_versions")
     _need(_req(msg, "websocket_scope") == "channel")
     return SdkCapabilities(
         protocol_version=1,

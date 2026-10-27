@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import math
 import re
+import ssl
 from dataclasses import dataclass, field, replace
 from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Any
@@ -129,6 +131,12 @@ def _status_error(response: httpx.Response, is_sensitive: Callable[[str], bool],
     return ProtocolError("Unexpected HTTP status", **options)
 
 
+@functools.lru_cache(maxsize=1)
+def _tls_context() -> ssl.SSLContext:
+    """httpx's default verifying context (certifi bundle), built once per process."""
+    return httpx.create_ssl_context()
+
+
 class HttpTransport:
     """httpx-only transport that never follows redirects and never logs bodies."""
 
@@ -139,6 +147,9 @@ class HttpTransport:
         self._credentials: set[str] = set()
         self._omit_request_ids = False
         self._client: httpx.AsyncClient | None = None
+        # Loading the CA bundle can take seconds on some hosts. Do it once per process and
+        # before any request deadline starts; plain-HTTP loopback origins never need TLS.
+        self._verify: Any = _tls_context() if config.base_url.startswith("https://") and config.transport is None else False
 
     def __repr__(self) -> str:
         return "HttpTransport()"
@@ -146,7 +157,9 @@ class HttpTransport:
     def _http(self) -> httpx.AsyncClient:
         if self._client is None:
             # Proxies are application-managed through an explicit transport, like Node's fetch option.
-            self._client = httpx.AsyncClient(transport=self._config.transport, follow_redirects=False, trust_env=False, timeout=None)
+            self._client = httpx.AsyncClient(
+                transport=self._config.transport, follow_redirects=False, trust_env=False, timeout=None, verify=self._verify
+            )
         return self._client
 
     async def aclose(self) -> None:
@@ -269,17 +282,14 @@ class HttpTransport:
         task = ensure_future(client.send(request, stream=True))
         try:
             return await race_signal(task, signal)
-        except HumChatError:
-            if signal.aborted:
-                task.cancel()
-                task.add_done_callback(_close_late_response)
-                raise aborted(signal) from None
-            raise
         except asyncio.CancelledError:
             task.cancel()
             raise
         except Exception:
+            # Errors raised by a custom transport (even SDK error classes) are never surfaced.
             if signal.aborted:
+                task.cancel()
+                task.add_done_callback(_close_late_response)
                 raise aborted(signal) from None
             raise NetworkError("Transport failed", retryable=True) from None
 
@@ -291,10 +301,6 @@ class HttpTransport:
         while True:
             try:
                 chunk = await race_signal(_next_chunk(stream), signal)
-            except HumChatError:
-                if signal.aborted:
-                    raise aborted(signal) from None
-                raise
             except asyncio.CancelledError:
                 raise
             except Exception:
