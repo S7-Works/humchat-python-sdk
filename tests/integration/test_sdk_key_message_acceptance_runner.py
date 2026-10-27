@@ -35,7 +35,8 @@ def assert_sanitized(fixture: DmPeer, output: str) -> None:
 
 
 async def execute(fixture: DmPeer, **overrides: str | None) -> dict[str, Any]:
-    inherited = {k: v for k, v in os.environ.items() if k.upper() in ("PATH", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA")}
+    keep = ("PATH", "SYSTEMROOT", "SYSTEMDRIVE", "PROGRAMDATA", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA")
+    inherited = {k: v for k, v in os.environ.items() if k.upper() in keep}
     configured: dict[str, str | None] = {
         "HUMCHAT_BASE_URL": fixture.origin, "HUMCHAT_ORG_ID": ORG, "HUMCHAT_SDK_KEY": SDK_KEY, "HUMCHAT_ACT_AS": ALICE.email,
         "HUMCHAT_TEST_RECIPIENT_EMAIL": BOB.email, "HUMCHAT_ACCEPTANCE_SEND": "true", "HUMCHAT_ACCEPTANCE_TIMEOUT_MS": "10000", **overrides,

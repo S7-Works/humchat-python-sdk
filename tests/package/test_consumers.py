@@ -348,7 +348,7 @@ async def test_installed_package_performs_real_local_list_send_reaction_and_real
     peer = await LoopbackPeer(http).start()
     script = installed.consumer / "live_consumer.py"
     script.write_text(LIVE, encoding="utf-8")
-    env = {k: v for k, v in os.environ.items() if k.upper() in ("PATH", "SYSTEMROOT", "TEMP", "TMP", "HOME", "USERPROFILE")}
+    env = {k: v for k, v in os.environ.items() if k.upper() in ("PATH", "SYSTEMROOT", "SYSTEMDRIVE", "PROGRAMDATA", "TEMP", "TMP", "HOME", "USERPROFILE")}
     env.update(HUMCHAT_BASE_URL=peer.base_url, HUMCHAT_ORG_ID=org, HUMCHAT_TOKEN=FIXTURE_TOKEN, HUMCHAT_CHANNEL_ID=channel, HUMCHAT_TEAM_ID=team)
     child = await asyncio.create_subprocess_exec(
         str(installed.python), "-I", str(script), env=env, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE

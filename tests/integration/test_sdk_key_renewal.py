@@ -393,7 +393,9 @@ async def test_an_old_http_401_joins_the_socket_renewal_already_in_flight(mode: 
 
     fixture = await make_peer(mode, first_ttl=3, mint=mint, members=members)
     try:
-        client = fixture.client()
+        # The old-token request is held until the scheduled renewal (~1.5 s after the first
+        # 3 s token), so Node's 1500 ms attempt timeout races that hold on slow runners.
+        client = fixture.client(timeout_ms=5000)
         active = await subscribe(client)
         pending = asyncio.ensure_future(client.members.list())
         await old_request

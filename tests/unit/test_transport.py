@@ -425,7 +425,9 @@ async def test_exhausted_network_and_timeout_sends_retain_exact_recoverable_inte
                 raise RuntimeError(MARKER)
             return await never()
 
-        client, _ = make_client(route, timeout_ms=20, retry={"max_retries": 1, "initial_delay_ms": 0, "max_delay_ms": 0, "total_timeout_ms": 1000})
+        # Node uses a 20 ms attempt timeout; it also bounds the /me and capability requests,
+        # which can exceed 20 ms on a loaded CI runner. 200 ms keeps both attempts in budget.
+        client, _ = make_client(route, timeout_ms=200, retry={"max_retries": 1, "initial_delay_ms": 0, "max_delay_ms": 0, "total_timeout_ms": 1000})
         error = await rejects(
             client.messages.send(channel_id=CHANNEL_ID, content="Synthetic send", id="failure-intent", idempotency_key="failure-key"), code(kind)
         )
